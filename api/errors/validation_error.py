@@ -17,7 +17,7 @@ async def http422_error_handler(
             "hasError": True,
             "success": False,
             "data" : {
-                "error_msg": exc.errors()
+                "errors": exc.errors()
             }
         }, 
         status_code=HTTP_422_UNPROCESSABLE_ENTITY,
