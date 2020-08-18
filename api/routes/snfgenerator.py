@@ -20,7 +20,7 @@ responses = {
 }
 
 
-async def authenticate_session(request: Request, session:Session = Depends(SessionRequest)) -> str:
+async def authenticate_session(request: Request, session:Session = Depends(SessionRequest)) -> Session:
     redis = request.app.state.redis
     loop = asyncio.get_event_loop()
 
@@ -36,18 +36,31 @@ async def authenticate_session(request: Request, session:Session = Depends(Sessi
     return session
 
 
-@router.post("/session", response_model=DefaultResponse[Dict], response_model_exclude_unset=True, responses=responses)
-async def authenticate_and_generate_session(request: Request, session:Session = Depends(authenticate_session)) -> DefaultResponse[Dict]:
+@router.post("/session", response_model=DefaultResponse[str], response_model_exclude_unset=True, responses=responses)
+async def authenticate_and_generate_session(request: Request, session:Session = Depends(authenticate_session)) -> DefaultResponse[str]:
+    request.session['user'] = session.pid
+    request.session['group'] = "default"
+
     redis = request.app.state.redis
     loop = asyncio.get_event_loop()
 
     await redis.set(f"session:{session.snfSession}", json.dumps(jsonable_encoder(session)))
     await redis.delete(f"mp_session:{session.pid}")
 
-    return DefaultResponse[Dict](
-        hasError = False,
+    return DefaultResponse[str](
+        hasError = True,
         success = True,
-        data = {
-            'snfSession': session.snfSession
-        }
+        data = session.snfSession
     )
+
+
+def dummy(func):
+    print(func, func.__dict__, dir(func))
+
+    return lambda *x: None
+
+@dummy
+@router.get("/test")
+async def test(request: Request):
+    print(request.session)
+    return f"user={request.session['user']}"
