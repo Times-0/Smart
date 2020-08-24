@@ -44,23 +44,12 @@ async def authenticate_and_generate_session(request: Request, session:Session = 
     redis = request.app.state.redis
     loop = asyncio.get_event_loop()
 
-    await redis.set(f"session:{session.snfSession}", json.dumps(jsonable_encoder(session)))
+    await redis.set(f"session:{session.snfSession}", json.dumps(jsonable_encoder(session)), expire=60*30) # next 30 mins
     await redis.delete(f"mp_session:{session.pid}")
 
     return DefaultResponse[str](
-        hasError = True,
+        hasError = False,
         success = True,
         data = session.snfSession
     )
 
-
-def dummy(func):
-    print(func, func.__dict__, dir(func))
-
-    return lambda *x: None
-
-@dummy
-@router.get("/test")
-async def test(request: Request):
-    print(request.session)
-    return f"user={request.session['user']}"
