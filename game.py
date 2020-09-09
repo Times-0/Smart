@@ -5,6 +5,8 @@ import functools
 from loguru import logger
 from server.core.engine import Engine
 from server.core.constants import ServerType
+from server.core.utils.module import hot_reload_module
+from server import handlers
 
 class Nothing(object):
     pass
@@ -37,6 +39,8 @@ async def main():
     logger.add("logs/smart-{time}.log", rotation="50 MB")
 
     await catch_exceptions()
+
+    await hot_reload_module(handlers)
 
     loop = asyncio.get_event_loop()
     login_server = Engine[Nothing](
