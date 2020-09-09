@@ -118,12 +118,10 @@ class MyEventHandler(AIOEventHandler):
 
 async def hot_reload_module(module:ModuleType):
     path = os.path.dirname(module.__file__)
-
     evh = MyEventHandler(module, debug=EVENT_DEBUG)
     await evh.load_modules()
 
-    watch = AIOWatchdog(path, event_handler=evh, recursive=True)
-
-    __MODULE_WATCHERS__[module.__name__] = watch
-
-    watch.start()
+    if EVENT_DEBUG:
+        watch = AIOWatchdog(path, event_handler=evh, recursive=True)
+        __MODULE_WATCHERS__[module.__name__] = watch
+        watch.start()
