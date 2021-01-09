@@ -44,17 +44,17 @@ async def authenticate_and_generate_session(request: Request, session:Session = 
         cjservers = await redis.smembers("cjs_servers", encoding='utf-8')
         available_server = None
         for server in cjservers:
-            server_data = await redis.hgetall(f"cj_server:{server}", encoding='utf-8')
-
-            if server_data['users'] < server_data['max']:
+            server_data = await redis.hgetall(f"cjs_server:{server}", encoding='utf-8')
+            
+            if int(server_data['users']) < int(server_data['max']):
                 available_server = server_data
                 break
 
         else:
             return "[S_ERROR]|3902|Smart Error|-1|no available servers"
 
-        return f"[S_WORLDLIST]|{available['id']}|Smart|{available['ip']}|{available['port']}|Dote|Bale|{available['name']}|TimelineSmartServer"
+        return f"[S_WORLDLIST]|{available_server['id']}|Smart|{available_server['ip']}|{available_server['port']}|Dote|Bale|{available_server['name']}|TimelineSmartServer"
 
     except Exception as e:
-        return "[S_ERROR]|3104|Smart Error|-1|{e}"
+        return f"[S_ERROR]|3104|Smart Error|-1|{str(e)}"
 

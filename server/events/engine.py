@@ -1,5 +1,3 @@
-import asyncio
-from loguru import logger
 from typing import Optional, TypeVar, Generic, List, Any
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -20,5 +18,5 @@ class EngineEvent(BaseModel):
         super().__init__(type=type, status=status)
 
     def __str__(self):
-        return f"{self.type.name}::{self.status.name}"
+        return f"EngineEvent#{self.type.name}::{self.status.name}"
 

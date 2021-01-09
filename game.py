@@ -4,12 +4,11 @@ import signal
 import functools
 from loguru import logger
 from server.core.engine import Engine
+from server.core.clients.snowclient import SnowClient
 from server.core.constants import ServerType
 from server.core.utils.module import hot_reload_module
-from server import handlers
+from server.core.config import DATABASE
 
-class Nothing(object):
-    pass
 
 
 async def catch_exceptions():
@@ -30,26 +29,48 @@ def shutdown(server_list, loop):
     loop.stop()
 
 
+async def setup_database():
+    try:
+        await DATABASE.connect()
+        logger.info("Connected to database")
+    except Exception as e:
+        logger.exception("Unable to connect to database. Exiting.")
+        os._exit(1)
+
+
 graceful_shutdown_handler = lambda : None
 
 async def main():
+    print(r"""
+
+  ____      __  __      _       ____      _____   
+ / __"| u U|' \/ '|uU  /"\  uU |  _"\ u  |_ " _|  
+<\___ \/  \| |\/| |/ \/ _ \/  \| |_) |/    | |    
+ u___) |   | |  | |  / ___ \   |  _ <     /| |\   
+ |____/>>  |_|  |_| /_/   \_\  |_| \_\   u |_|U   
+  )(  (__)<<,-,,-.   \\    >>  //   \\_  _// \\_  
+ (__)      (./  \.) (__)  (__)(__)  (__)(__) (__) 
+
+    """)
+    
+    from server import handlers
     global graceful_shutdown_handler
 
     logger.info("Smart CJS server is starting")
-    logger.add("logs/smart-{time}.log", rotation="50 MB")
+    logger.add("logs/smart-{time}.log", rotation="50 MB", retention=10)
 
     await catch_exceptions()
-
     await hot_reload_module(handlers)
+    await setup_database()
 
     loop = asyncio.get_event_loop()
-    login_server = Engine[Nothing](
+    login_server = Engine[SnowClient](
         id = 2000,
         ip = '127.0.0.1',
         port = 6200,
         type = ServerType.LOGIN,
-        client_protocol = Nothing,
-        loop = loop
+        loop = loop,
+        name = 'Login-Server'
     )
 
     logger.info("Booting servers")

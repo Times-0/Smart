@@ -19,6 +19,10 @@ from api.core.config import ALLOWED_HOSTS, API_PREFIX, DEBUG, SECRET_KEY
 from api.core.events import create_start_app_handler, create_stop_app_handler
 
 
+async def AUTH_FUNCTION(scope):
+    return scope['client'][0], "default" #USER_UNIQUE_ID, GROUP_NAME
+
+
 def get_application() -> FastAPI:
     application = FastAPI(
         debug = True,
@@ -47,12 +51,16 @@ def get_application() -> FastAPI:
     Note: If the API is a proxy to base play url (eg: play.localhost/cjs/...), it's better to use from_session
           else, for generic purpose, you can rate limit using IP address too.
     '''
-    AUTH_FUNCTION = client_ip or from_session
+    #AUTH_FUNCTION = client_ip or from_session
     application.add_middleware(
         RateLimitMiddleware,
         authenticate=AUTH_FUNCTION,
         backend=RedisBackend(),
         config=router_rate_limits
+        #{
+        #    r"^/second_limit": [Rule(second=1), Rule(group="admin")],
+        #    r"^/minute_limit": [Rule(minute=1), Rule(group="admin")],
+        #},
     )
 
     application.add_event_handler("startup", create_start_app_handler(application))
